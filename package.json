@@ -1,0 +1,16 @@
+{
+  "name": "uno-web-service",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix server run dev",
+    "build": "npm --prefix server run build",
+    "start": "npm --prefix server run start"
+  }
+}
+
+
+
+
+
+
+

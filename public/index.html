@@ -1,0 +1,856 @@
+<!doctype html>
+<html lang="tr">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>UNO Arena</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --text: #f8fafc;
+      --text-dim: #94a3b8;
+      --border: rgba(255, 255, 255, 0.1);
+      --primary: #3b82f6;
+      --red: #ef4444;
+      --yellow: #eab308;
+      --green: #22c55e;
+      --blue: #3b82f6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+      /* Prevent scrolling on game screen */
+    }
+
+    /* --- UI Shell & Panels --- */
+    .shell {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      pointer-events: none;
+      /* Let clicks pass through to game if needed */
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 32px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      pointer-events: auto;
+      text-align: center;
+    }
+
+    .panel h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      background: linear-gradient(to right, var(--red), var(--yellow), var(--green), var(--blue));
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .panel p {
+      margin: 0 0 24px;
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    .panel h2 {
+      margin: 0 0 20px;
+      font-size: 20px;
+    }
+
+    input {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      padding: 12px 16px;
+      border-radius: 12px;
+      color: white;
+      font-size: 16px;
+      margin-bottom: 12px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      background: var(--primary);
+      color: white;
+      transition: transform 0.1s;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button.secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      margin-top: 12px;
+    }
+
+    .players-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+
+    .player-tag {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px 12px;
+      border-radius: 99px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+    }
+
+    /* --- Game Layout --- */
+    #game {
+      position: absolute;
+      inset: 0;
+      display: none;
+      /* Hidden by default */
+    }
+
+    /* Center Area: Draw | Info | Discard */
+    .table-center {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      gap: 40px;
+      z-index: 40;
+    }
+
+    .pile {
+      width: 120px;
+      height: 180px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pile img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+    }
+
+    .draw-btn {
+      position: absolute;
+      bottom: -40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: auto;
+      white-space: nowrap;
+      padding: 8px 16px;
+      font-size: 13px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+    }
+
+    /* Game Info Box */
+    .game-info {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      min-width: 200px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .info-row {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .info-item {
+      text-align: center;
+    }
+
+    .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+
+    .value {
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .active-color-badge {
+      padding: 4px 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      font-size: 14px;
+    }
+
+    .status-text {
+      font-size: 13px;
+      color: var(--yellow);
+      margin-top: 8px;
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* --- Seats --- */
+    .seat {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      z-index: 20;
+    }
+
+    .seat-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      transition: all 0.2s;
+    }
+
+    .seat.active .seat-card {
+      border-color: var(--yellow);
+      box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.3);
+    }
+
+    .seat-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .seat-meta {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .mini-hand {
+      display: flex;
+      gap: 2px;
+      margin-top: 4px;
+      justify-content: center;
+    }
+
+    .mini-card {
+      width: 16px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+
+    /* Positioning */
+    .seat-top {
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .seat-left {
+      top: 50%;
+      left: 20px;
+      transform: translateY(-50%);
+    }
+
+    .seat-right {
+      top: 50%;
+      right: 20px;
+      transform: translateY(-50%);
+    }
+
+    .seat-bottom {
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 900px;
+      pointer-events: none;
+      /* Allow clicks through empty space */
+    }
+
+    /* Player Hand */
+    .my-hand {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: -10px;
+      /* Overlap slightly */
+      pointer-events: auto;
+      padding: 20px;
+    }
+
+    .my-hand img {
+      width: 100px;
+      /* Bigger cards for player */
+      height: 150px;
+      object-fit: contain;
+      transition: transform 0.2s, margin 0.2s;
+      cursor: pointer;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    }
+
+    .my-hand img:hover {
+      transform: translateY(-20px) scale(1.1);
+      z-index: 10;
+      margin: 0 10px;
+    }
+
+    .my-hand img.playable {
+      filter: drop-shadow(0 0 8px var(--green));
+    }
+
+    /* UNO Button & Error */
+    .uno-btn {
+      position: absolute;
+      bottom: 240px;
+      /* Above hand */
+      right: 40px;
+      width: auto;
+      background: linear-gradient(135deg, var(--red), var(--yellow));
+      padding: 16px 32px;
+      border-radius: 99px;
+      font-size: 20px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+      z-index: 30;
+    }
+
+    .error-msg {
+      position: absolute;
+      bottom: 250px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--red);
+      background: rgba(0, 0, 0, 0.8);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      pointer-events: none;
+    }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .color-opt {
+      height: 60px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .color-opt:hover {
+      transform: scale(1.05);
+    }
+
+    /* Animations */
+    .card-fly {
+      position: fixed;
+      z-index: 60;
+      transition: all 0.5s ease-out;
+      pointer-events: none;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .table-center {
+        gap: 16px;
+        flex-direction: row;
+      }
+
+      .pile {
+        width: 90px;
+        height: 135px;
+      }
+
+      .game-info {
+        padding: 12px;
+        min-width: 140px;
+      }
+
+      .value {
+        font-size: 16px;
+      }
+
+      .seat-top {
+        top: 10px;
+      }
+
+      .seat-left {
+        left: 10px;
+      }
+
+      .seat-right {
+        right: 10px;
+      }
+
+      .my-hand img {
+        width: 70px;
+        height: 105px;
+      }
+
+      .uno-btn {
+        bottom: 180px;
+        right: 20px;
+        padding: 12px 24px;
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Auth / Lobby Shell -->
+  <div class="shell" id="shell">
+    <div id="auth" class="panel">
+      <h1>UNO Arena</h1>
+      <p>Hızlı, Bot Destekli, Online UNO</p>
+      <input id="nameInput" placeholder="Oyuncu Adı" />
+      <input id="roomInput" placeholder="Oda Kodu (Opsiyonel)" />
+      <button id="createBtn">Oda Oluştur</button>
+      <button id="joinBtn" class="secondary">Odaya Katıl</button>
+    </div>
+
+    <div id="lobby" class="panel" style="display:none">
+      <h2>Oda: <span id="roomCode" style="color:var(--primary)">...</span></h2>
+      <p>Oda Sahibi: <span id="hostId">...</span></p>
+      <div id="players" class="players-list"></div>
+      <div style="margin-top:24px">
+        <button id="startBtn">Oyunu Başlat</button>
+      </div>
+    </div>
+
+    <div id="over" class="panel" style="display:none">
+      <h2>Oyun Bitti!</h2>
+      <p>Kazanan</p>
+      <h1 id="winner">...</h1>
+      <button id="restartBtn">Tekrar Oyna</button>
+    </div>
+  </div>
+
+  <!-- Game Area -->
+  <main id="game">
+    <!-- Seats -->
+    <div class="seat seat-top" data-seat="top">
+      <div class="seat-card">
+        <div class="seat-name">Oyuncu</div>
+        <div class="seat-meta">0 Kart</div>
+      </div>
+      <div class="seat-hand mini-hand"></div>
+    </div>
+
+    <div class="seat seat-left" data-seat="left">
+      <div class="seat-card">
+        <div class="seat-name">Oyuncu</div>
+        <div class="seat-meta">0 Kart</div>
+      </div>
+      <div class="seat-hand mini-hand"></div>
+    </div>
+
+    <div class="seat seat-right" data-seat="right">
+      <div class="seat-card">
+        <div class="seat-name">Oyuncu</div>
+        <div class="seat-meta">0 Kart</div>
+      </div>
+      <div class="seat-hand mini-hand"></div>
+    </div>
+
+    <!-- Center Table -->
+    <div class="table-center">
+      <!-- Draw Pile -->
+      <div class="pile draw">
+        <img src="/cards/siyah/arka.png" alt="Draw" />
+        <button id="drawBtn" class="draw-btn">Kart Çek</button>
+      </div>
+
+      <!-- Info -->
+      <div class="game-info">
+        <div class="info-row">
+          <div class="info-item">
+            <div class="label">Renk</div>
+            <div class="active-color-badge" id="activeColor">-</div>
+          </div>
+          <div class="info-item">
+            <div class="label">Süre</div>
+            <div class="value" id="remaining">20s</div>
+          </div>
+        </div>
+        <div class="status-text">
+          <span id="direction">→</span> Sıra: <span id="currentPlayer">...</span>
+        </div>
+        <div style="font-size:12px; color:var(--text-dim); margin-top:4px">
+          UNO: <span id="unoRemain">0s</span> | Ceza: <span id="pending">0</span>
+        </div>
+      </div>
+
+      <!-- Discard Pile -->
+      <div class="pile discard">
+        <img id="discardImg" src="" alt="Discard" />
+      </div>
+    </div>
+
+    <!-- Bottom Player (Me) -->
+    <div class="seat seat-bottom" data-seat="bottom">
+      <div class="seat-card" style="display:inline-block; margin-bottom:10px">
+        <div class="seat-name">Sen</div>
+        <div class="seat-meta">Sıra sende mi?</div>
+      </div>
+      <div class="my-hand" id="hand"></div>
+    </div>
+
+    <button id="unoBtn" class="uno-btn">UNO!</button>
+    <div id="error" class="error-msg"></div>
+  </main>
+
+  <!-- Color Modal -->
+  <div id="colorModal" class="modal">
+    <div class="panel">
+      <h2>Renk Seç</h2>
+      <div class="color-grid">
+        <div class="color-opt" style="background:var(--red)" data-color="red"></div>
+        <div class="color-opt" style="background:var(--yellow)" data-color="yellow"></div>
+        <div class="color-opt" style="background:var(--green)" data-color="green"></div>
+        <div class="color-opt" style="background:var(--blue)" data-color="blue"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // --- Logic Preserved & Adapted ---
+    const el = (id) => document.getElementById(id);
+    const nameInput = el('nameInput');
+    const roomInput = el('roomInput');
+    const createBtn = el('createBtn');
+    const joinBtn = el('joinBtn');
+    const shell = el('shell');
+    const auth = el('auth');
+    const lobby = el('lobby');
+    const over = el('over');
+    const roomCode = el('roomCode');
+    const hostIdEl = el('hostId');
+    const playersEl = el('players');
+    const startBtn = el('startBtn');
+
+    const game = el('game');
+    const discardImg = el('discardImg');
+    const activeColorEl = el('activeColor');
+    const directionEl = el('direction');
+    const currentPlayerEl = el('currentPlayer');
+    const handEl = el('hand');
+    const drawBtn = el('drawBtn');
+    const unoBtn = el('unoBtn');
+    const errorEl = el('error');
+    const unoRemainEl = el('unoRemain');
+    const pendingEl = el('pending');
+    const remainingEl = el('remaining');
+    const winnerEl = el('winner');
+    const restartBtn = el('restartBtn');
+    const colorModal = el('colorModal');
+
+    // Seat mapping
+    const seatOrder = ['bottom', 'right', 'top', 'left'];
+    const seatNodes = seatOrder.reduce((acc, seat) => {
+      const root = document.querySelector(`[data-seat="${seat}"]`);
+      if (!root) return acc;
+      acc[seat] = {
+        root,
+        name: root.querySelector('.seat-name'),
+        meta: root.querySelector('.seat-meta'),
+        hand: root.querySelector('.seat-hand'), // For bots/others
+      };
+      return acc;
+    }, {});
+
+    const socket = io({ transports: ['websocket', 'polling'] });
+    let ctx = { roomId: null, playerId: null, hostId: null, lastState: null };
+
+    const colorNameMap = { red: 'KIRMIZI', yellow: 'SARI', green: 'YEŞİL', blue: 'MAVİ' };
+
+    function cardImgUrl(card) {
+      if (!card) return '/cards/siyah/boş.png';
+      if (card.value === 'wild' || card.value === 'wild4') {
+        const file = card.value === 'wild' ? 'renk_değiş.png' : '+4.png';
+        return `/cards/siyah/${file}`;
+      }
+      const folder = { red: 'kırmızı', yellow: 'sarı', green: 'yeşil', blue: 'mavi' }[card.color];
+      if (!folder) return '/cards/siyah/boş.png';
+
+      if (typeof card.value === 'number') return `/cards/${folder}/${card.value}.png`;
+      if (card.value === 'skip') return `/cards/${folder}/block.png`;
+      if (card.value === 'reverse') return `/cards/${folder}/yön_değiş.png`;
+      if (card.value === 'draw2') return `/cards/${folder}/+2.png`;
+      return '/cards/siyah/boş.png';
+    }
+
+    function setError(msg) {
+      errorEl.textContent = msg || '';
+      if (msg) setTimeout(() => errorEl.textContent = '', 3000);
+    }
+
+    function renderPlayers(list) {
+      playersEl.innerHTML = '';
+      list.forEach(p => {
+        const d = document.createElement('div');
+        d.className = 'player-tag';
+        d.textContent = `${p.name}${p.isBot ? ' 🤖' : ''}`;
+        playersEl.appendChild(d);
+      });
+    }
+
+    let tickTimer = null;
+    function startTicks() {
+      if (tickTimer) clearInterval(tickTimer);
+      tickTimer = setInterval(() => {
+        const s = ctx.lastState;
+        if (!s) return;
+        const elapsed = Date.now() - (s._ts || Date.now());
+        const t = Math.max(0, (s.remainingMs || 0) - elapsed);
+        remainingEl.textContent = Math.ceil(t / 1000) + 's';
+        if (typeof s.unoGraceRemainingMs === 'number') {
+          const u = Math.max(0, (s.unoGraceRemainingMs || 0) - elapsed);
+          unoRemainEl.textContent = Math.ceil(u / 1000) + 's';
+        }
+      }, 250);
+    }
+
+    function playerNameById(state, id) {
+      const found = state.players?.find(p => p.id === id);
+      return found ? found.name : id;
+    }
+
+    function rotatePlayers(state) {
+      const players = state.players || [];
+      if (!players.length) return [];
+      const myIdx = players.findIndex(p => p.id === ctx.playerId);
+      if (myIdx === -1) return players;
+      const ordered = [];
+      for (let i = 0; i < players.length; i++) {
+        ordered.push(players[(myIdx + i) % players.length]);
+      }
+      return ordered;
+    }
+
+    function renderSeats(state) {
+      const ordered = rotatePlayers(state);
+      seatOrder.forEach((seat, idx) => {
+        const seatView = seatNodes[seat];
+        if (!seatView) return;
+        const info = ordered[idx];
+
+        if (!info) {
+          seatView.root.style.visibility = 'hidden';
+          return;
+        }
+        seatView.root.style.visibility = 'visible';
+        seatView.name.textContent = info.name;
+
+        const count = state.handsCount?.[info.id] ?? 0;
+        seatView.meta.textContent = `${count} Kart`;
+        seatView.root.classList.toggle('active', state.currentPlayerId === info.id);
+
+        // Render hand for ME (bottom) separately
+        if (seat === 'bottom') {
+          renderHand(state.you?.hand || [], state);
+        } else {
+          // Render mini cards for others
+          seatView.hand.innerHTML = '';
+          for (let i = 0; i < Math.min(count, 10); i++) {
+            const pip = document.createElement('div');
+            pip.className = 'mini-card';
+            seatView.hand.appendChild(pip);
+          }
+        }
+      });
+    }
+
+    function animateCardFly(sourceImg) {
+      if (!sourceImg) return;
+      const rect = sourceImg.getBoundingClientRect();
+      const targetRect = discardImg.getBoundingClientRect();
+      const clone = sourceImg.cloneNode(true);
+      clone.className = 'card-fly'; // Reset classes
+      clone.style.left = rect.left + 'px';
+      clone.style.top = rect.top + 'px';
+      clone.style.width = rect.width + 'px';
+      clone.style.height = rect.height + 'px';
+      document.body.appendChild(clone);
+
+      requestAnimationFrame(() => {
+        const dx = targetRect.left + targetRect.width / 2 - (rect.left + rect.width / 2);
+        const dy = targetRect.top + targetRect.height / 2 - (rect.top + rect.height / 2);
+        clone.style.transform = `translate(${dx}px, ${dy}px) scale(0.5)`;
+        clone.style.opacity = '0';
+      });
+      clone.addEventListener('transitionend', () => clone.remove());
+    }
+
+    function renderHand(cards, state) {
+      handEl.innerHTML = '';
+      cards.forEach(card => {
+        const img = document.createElement('img');
+        img.src = cardImgUrl(card);
+
+        const isPlayable = card.value === 'wild' || card.value === 'wild4' ||
+          card.color === state.activeColor || card.value === state.discardTop.value ||
+          (state.pendingDraw > 0 && (card.value === 'draw2' || card.value === 'wild4'));
+
+        if (isPlayable) img.classList.add('playable');
+
+        img.onclick = () => {
+          if (state.pendingDraw > 0 && !(card.value === 'draw2' || card.value === 'wild4')) return;
+
+          if (card.value === 'wild' || card.value === 'wild4') {
+            colorModal.style.display = 'flex';
+            const handleColor = (e) => {
+              const c = e.target.getAttribute('data-color');
+              if (!c) return;
+              colorModal.style.display = 'none';
+              animateCardFly(img);
+              socket.emit('play_card', { cardId: card.id, color: c });
+              colorModal.removeEventListener('click', handleColor);
+            };
+            colorModal.onclick = handleColor;
+          } else {
+            animateCardFly(img);
+            socket.emit('play_card', { cardId: card.id });
+          }
+        };
+        handEl.appendChild(img);
+      });
+    }
+
+    function renderState(s) {
+      ctx.lastState = s;
+      ctx.lastState._ts = Date.now();
+
+      // Switch views
+      auth.style.display = 'none';
+      lobby.style.display = 'none';
+      over.style.display = 'none';
+      game.style.display = 'block';
+
+      // Update Center
+      discardImg.src = cardImgUrl(s.discardTop);
+
+      const trColor = colorNameMap[s.activeColor] || s.activeColor;
+      activeColorEl.textContent = trColor;
+      activeColorEl.style.color = `var(--${s.activeColor})`;
+      activeColorEl.style.borderColor = `var(--${s.activeColor})`;
+
+      directionEl.textContent = s.direction === 1 ? '↻' : '↺';
+      currentPlayerEl.textContent = playerNameById(s, s.currentPlayerId);
+      pendingEl.textContent = s.pendingDraw || 0;
+
+      renderSeats(s);
+      startTicks();
+    }
+
+    // Event Listeners
+    createBtn.onclick = () => {
+      const name = nameInput.value.trim();
+      if (!name) return setError('İsim gerekli');
+      socket.emit('join_room', { name });
+    };
+
+    joinBtn.onclick = () => {
+      const name = nameInput.value.trim();
+      const roomId = roomInput.value.trim();
+      if (!name) return setError('İsim gerekli');
+      if (!roomId) return setError('Oda kodu gerekli');
+      socket.emit('join_room', { name, roomId });
+    };
+
+    startBtn.onclick = () => socket.emit('start_game');
+    drawBtn.onclick = () => socket.emit('draw_card');
+    unoBtn.onclick = () => socket.emit('call_uno');
+    restartBtn.onclick = () => socket.emit('start_game');
+
+    // Socket Events
+    socket.on('joined', ({ roomId, playerId, hostId }) => {
+      ctx.roomId = roomId; ctx.playerId = playerId; ctx.hostId = hostId;
+      roomCode.textContent = roomId;
+      hostIdEl.textContent = hostId;
+      auth.style.display = 'none';
+      lobby.style.display = 'block';
+    });
+
+    socket.on('players_update', renderPlayers);
+
+    socket.on('state_update', (state) => renderState(state));
+
+    socket.on('game_over', ({ winnerId }) => {
+      game.style.display = 'none';
+      over.style.display = 'block';
+      const winnerName = ctx.lastState?.players.find(p => p.id === winnerId)?.name || 'Bilinmiyor';
+      winnerEl.textContent = winnerName;
+    });
+
+    socket.on('error', (e) => {
+      setError(e?.code || 'Hata oluştu');
+      if (e?.code === 'must_stack_draw') alert('Cezayı yansıtmamak için +2 veya +4 oynamalısın!');
+    });
+
+  </script>
+</body>
+
+</html>
