@@ -64,6 +64,7 @@
       font-size: 32px;
       background: linear-gradient(to right, var(--red), var(--yellow), var(--green), var(--blue));
       -webkit-background-clip: text;
+      background-clip: text;
       color: transparent;
     }
 
@@ -235,84 +236,6 @@
       text-align: center;
     }
 
-    /* --- Seats --- */
-    .seat {
-      position: absolute;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      z-index: 20;
-    }
-
-    .seat-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      padding: 8px 16px;
-      border-radius: 12px;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      transition: all 0.2s;
-    }
-
-    .seat.active .seat-card {
-      border-color: var(--yellow);
-      box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.3);
-    }
-
-    .seat-name {
-      font-weight: 600;
-      font-size: 14px;
-    }
-
-    .seat-meta {
-      font-size: 12px;
-      color: var(--text-dim);
-    }
-
-    .mini-hand {
-      display: flex;
-      gap: 2px;
-      margin-top: 4px;
-      justify-content: center;
-    }
-
-    .mini-card {
-      width: 16px;
-      height: 24px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
-    }
-
-    /* Positioning */
-    .seat-top {
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-    }
-
-    .seat-left {
-      top: 50%;
-      left: 20px;
-      transform: translateY(-50%);
-    }
-
-    .seat-right {
-      top: 50%;
-      right: 20px;
-      transform: translateY(-50%);
-    }
-
-    .seat-bottom {
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      max-width: 900px;
-      pointer-events: none;
-      /* Allow clicks through empty space */
-    }
-
     /* Player Hand */
     .my-hand {
       display: flex;
@@ -357,19 +280,6 @@
       font-size: 20px;
       box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
       z-index: 30;
-    }
-
-    .error-msg {
-      position: absolute;
-      bottom: 250px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: var(--red);
-      background: rgba(0, 0, 0, 0.8);
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-weight: 600;
-      pointer-events: none;
     }
 
     /* Modal */
@@ -430,18 +340,6 @@
         font-size: 16px;
       }
 
-      .seat-top {
-        top: 10px;
-      }
-
-      .seat-left {
-        left: 10px;
-      }
-
-      .seat-right {
-        right: 10px;
-      }
-
       .my-hand img {
         width: 70px;
         height: 105px;
@@ -454,6 +352,218 @@
         font-size: 16px;
       }
     }
+
+    /* Fixed Bottom Seat (Me) */
+    .seat-bottom {
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 900px;
+      pointer-events: none;
+      /* Ensure hand area doesn't move the absolute name card */
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      /* cards build up from bottom */
+    }
+
+    /* Absolute position for MY name tag so it stays put */
+    .seat-bottom .seat-card {
+      position: absolute;
+      bottom: 180px;
+      /* Fixed height from bottom */
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 50;
+      /* On top of cards */
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--primary);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+      padding: 8px 24px;
+    }
+
+    /* Dynamic Seats */
+    .seat {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      z-index: 20;
+      transition: all 0.5s ease-out;
+    }
+
+    /* Enhanced Seat Card & Avatar */
+    .seat-card {
+      background: rgba(30, 41, 59, 0.9);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      border-radius: 16px;
+      text-align: left;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 140px;
+    }
+
+    .seat.active .seat-card {
+      border-color: var(--yellow);
+      box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.5);
+      transform: scale(1.05);
+    }
+
+    .seat-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--blue));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .seat-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .seat-name {
+      font-weight: 600;
+      font-size: 14px;
+      color: white;
+    }
+
+    .seat-meta {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    /* Stack counter badge */
+    .draw-badge {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background: var(--red);
+      color: white;
+      font-weight: bold;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      font-size: 14px;
+      z-index: 50;
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      from {
+        transform: scale(0);
+      }
+
+      to {
+        transform: scale(1);
+      }
+    }
+
+    /* Warning pulse */
+    .timer-warn {
+      color: var(--red) !important;
+      animation: pulseRed 1s infinite;
+    }
+
+    @keyframes pulseRed {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* Fancy Error */
+    .error-msg {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(15, 23, 42, 0.95);
+      border: 2px solid var(--red);
+      color: var(--red);
+      padding: 20px 40px;
+      border-radius: 16px;
+      font-size: 20px;
+      font-weight: 700;
+      z-index: 1000;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      text-align: center;
+    }
+
+    .error-msg.visible {
+      opacity: 1;
+      animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+    }
+
+    @keyframes shake {
+
+      10%,
+      90% {
+        transform: translate(-51%, -50%);
+      }
+
+      20%,
+      80% {
+        transform: translate(-49%, -50%);
+      }
+
+      30%,
+      50%,
+      70% {
+        transform: translate(-52%, -50%);
+      }
+
+      40%,
+      60% {
+        transform: translate(-48%, -50%);
+      }
+    }
+
+    .auth-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .max-players-sel {
+      flex: 1;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: white;
+      padding: 12px;
+      border-radius: 12px;
+      outline: none;
+    }
   </style>
 </head>
 
@@ -465,7 +575,20 @@
       <h1>UNO Arena</h1>
       <p>Hızlı, Bot Destekli, Online UNO</p>
       <input id="nameInput" placeholder="Oyuncu Adı" />
-      <input id="roomInput" placeholder="Oda Kodu (Opsiyonel)" />
+      <div class="auth-row">
+        <input id="roomInput" placeholder="Oda Kodu (Opsiyonel)" style="flex:2; margin:0" />
+        <select id="playerCount" class="max-players-sel">
+          <option value="2">2 Kişi</option>
+          <option value="3">3 Kişi</option>
+          <option value="4" selected>4 Kişi</option>
+          <option value="5">5 Kişi</option>
+          <option value="6">6 Kişi</option>
+          <option value="7">7 Kişi</option>
+          <option value="8">8 Kişi</option>
+          <option value="9">9 Kişi</option>
+          <option value="10">10 Kişi</option>
+        </select>
+      </div>
       <button id="createBtn">Oda Oluştur</button>
       <button id="joinBtn" class="secondary">Odaya Katıl</button>
     </div>
@@ -489,30 +612,8 @@
 
   <!-- Game Area -->
   <main id="game">
-    <!-- Seats -->
-    <div class="seat seat-top" data-seat="top">
-      <div class="seat-card">
-        <div class="seat-name">Oyuncu</div>
-        <div class="seat-meta">0 Kart</div>
-      </div>
-      <div class="seat-hand mini-hand"></div>
-    </div>
-
-    <div class="seat seat-left" data-seat="left">
-      <div class="seat-card">
-        <div class="seat-name">Oyuncu</div>
-        <div class="seat-meta">0 Kart</div>
-      </div>
-      <div class="seat-hand mini-hand"></div>
-    </div>
-
-    <div class="seat seat-right" data-seat="right">
-      <div class="seat-card">
-        <div class="seat-name">Oyuncu</div>
-        <div class="seat-meta">0 Kart</div>
-      </div>
-      <div class="seat-hand mini-hand"></div>
-    </div>
+    <!-- Seats Container (Dynamic) -->
+    <div id="seats-container"></div>
 
     <!-- Center Table -->
     <div class="table-center">
@@ -520,6 +621,7 @@
       <div class="pile draw">
         <img src="/cards/siyah/arka.png" alt="Draw" />
         <button id="drawBtn" class="draw-btn">Kart Çek</button>
+        <div id="drawBadge" class="draw-badge" style="display:none">0</div>
       </div>
 
       <!-- Info -->
@@ -550,9 +652,12 @@
 
     <!-- Bottom Player (Me) -->
     <div class="seat seat-bottom" data-seat="bottom">
-      <div class="seat-card" style="display:inline-block; margin-bottom:10px">
-        <div class="seat-name">Sen</div>
-        <div class="seat-meta">Sıra sende mi?</div>
+      <div class="seat-card">
+        <div class="seat-avatar">S</div>
+        <div class="seat-info">
+          <div class="seat-name">Sen</div>
+          <div class="seat-meta">Sıra sende mi?</div>
+        </div>
       </div>
       <div class="my-hand" id="hand"></div>
     </div>
@@ -580,6 +685,7 @@
     const el = (id) => document.getElementById(id);
     const nameInput = el('nameInput');
     const roomInput = el('roomInput');
+    const playerCountEl = el('playerCount');
     const createBtn = el('createBtn');
     const joinBtn = el('joinBtn');
     const shell = el('shell');
@@ -598,6 +704,7 @@
     const currentPlayerEl = el('currentPlayer');
     const handEl = el('hand');
     const drawBtn = el('drawBtn');
+    const drawBadge = el('drawBadge');
     const unoBtn = el('unoBtn');
     const errorEl = el('error');
     const unoRemainEl = el('unoRemain');
@@ -607,22 +714,27 @@
     const restartBtn = el('restartBtn');
     const colorModal = el('colorModal');
 
-    // Seat mapping
-    const seatOrder = ['bottom', 'right', 'top', 'left'];
-    const seatNodes = seatOrder.reduce((acc, seat) => {
-      const root = document.querySelector(`[data-seat="${seat}"]`);
-      if (!root) return acc;
-      acc[seat] = {
-        root,
-        name: root.querySelector('.seat-name'),
-        meta: root.querySelector('.seat-meta'),
-        hand: root.querySelector('.seat-hand'), // For bots/others
-      };
-      return acc;
-    }, {});
+    const seatsContainer = el('seats-container');
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function beep(freq = 440, type = 'sine', vol = 0.1, duration = 0.1) {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
 
     const socket = io({ transports: ['websocket', 'polling'] });
     let ctx = { roomId: null, playerId: null, hostId: null, lastState: null };
+    let tickTimer = null;
 
     const colorNameMap = { red: 'KIRMIZI', yellow: 'SARI', green: 'YEŞİL', blue: 'MAVİ' };
 
@@ -644,7 +756,19 @@
 
     function setError(msg) {
       errorEl.textContent = msg || '';
-      if (msg) setTimeout(() => errorEl.textContent = '', 3000);
+      if (msg) {
+        errorEl.classList.add('visible');
+        if (msg === 'invalid_uno_call') {
+          errorEl.textContent = 'Hatalı UNO! (+1 Cezalı)';
+          beep(200, 'sawtooth', 0.5, 0.4);
+        } else {
+          beep(150, 'square', 0.2, 0.2);
+        }
+        setTimeout(() => {
+          errorEl.classList.remove('visible');
+          errorEl.textContent = '';
+        }, 3000);
+      }
     }
 
     function renderPlayers(list) {
@@ -655,9 +779,9 @@
         d.textContent = `${p.name}${p.isBot ? ' 🤖' : ''}`;
         playersEl.appendChild(d);
       });
+      // also update waitingroom count if we wanted to
     }
 
-    let tickTimer = null;
     function startTicks() {
       if (tickTimer) clearInterval(tickTimer);
       tickTimer = setInterval(() => {
@@ -666,11 +790,38 @@
         const elapsed = Date.now() - (s._ts || Date.now());
         const t = Math.max(0, (s.remainingMs || 0) - elapsed);
         remainingEl.textContent = Math.ceil(t / 1000) + 's';
+
+        // Low time warning
+        const sec = Math.ceil(t / 1000);
+        if (sec <= 5 && sec > 0) {
+          remainingEl.classList.add('timer-warn');
+          // Tick beep on exact second change roughly
+          if (Math.abs(t % 1000) < 300) {
+            // debounce a bit? actually logic here runs every 250ms, so might beep multiple times.
+            // cleaner: store lastSec
+          }
+        } else {
+          remainingEl.classList.remove('timer-warn');
+        }
+
         if (typeof s.unoGraceRemainingMs === 'number') {
           const u = Math.max(0, (s.unoGraceRemainingMs || 0) - elapsed);
           unoRemainEl.textContent = Math.ceil(u / 1000) + 's';
         }
       }, 250);
+
+      // Separate strict 1s interval for beeps to allow 250ms render update
+      if (ctx.beepInterval) clearInterval(ctx.beepInterval);
+      ctx.beepInterval = setInterval(() => {
+        const s = ctx.lastState;
+        if (!s) return;
+        const elapsed = Date.now() - (s._ts || Date.now());
+        const t = Math.max(0, (s.remainingMs || 0) - elapsed);
+        const sec = Math.ceil(t / 1000);
+        if (sec <= 5 && sec > 0) {
+          beep(800, 'sine', 0.1, 0.1);
+        }
+      }, 1000);
     }
 
     function playerNameById(state, id) {
@@ -691,36 +842,109 @@
     }
 
     function renderSeats(state) {
-      const ordered = rotatePlayers(state);
-      seatOrder.forEach((seat, idx) => {
-        const seatView = seatNodes[seat];
-        if (!seatView) return;
-        const info = ordered[idx];
+      seatsContainer.innerHTML = '';
+      const players = rotatePlayers(state);
+      // 'players' array is rotated so index 0 is ME (bottom).
+      // We need to render index 1..N around the table.
 
-        if (!info) {
-          seatView.root.style.visibility = 'hidden';
-          return;
+      const others = players.slice(1);
+      const totalOthers = others.length;
+      if (totalOthers === 0) {
+        // Just me?
+        renderHand(state.you?.hand || [], state);
+        return;
+      }
+
+      // Distribute others in a semi-circle or full circle around top
+      // Angles: Bottom is 270 (or 90 down). we strictly place others from 180 to 0 (left to right) or full circle?
+      // Better: Circle distribution. Me is at 90deg (bottom).
+      // Let's spread others from approx 200deg to 340deg? No.
+      // Top is 270 (-90). Right is 0. Left is 180. Bottom is 90.
+      // Let's use 0 = Right, 90 = Bottom, 180 = Left, 270 = Top.
+      // Me is at 90.
+      // Others are distributed from 135 (Bottom Left) to 45 (Bottom Right) going clockwise? 
+      // i.e. 135 -> 180 -> 225 -> 270 -> 315 -> 0 -> 45
+      // Range: 220 deg total waiting space?
+
+      // Simpler: 
+      // 1 other: Top (270)
+      // 2 others: TopLeft, TopRight
+      // 3 others: Left, Top, Right
+      // N others: distribute evenly from 160deg to 380deg (20deg) ? 
+
+      const startAngle = 160; // Left-ish
+      const endAngle = 380;   // Right-ish (over 360)
+      const range = endAngle - startAngle;
+      const step = totalOthers > 1 ? range / (totalOthers - 1) : 0;
+
+      others.forEach((p, i) => {
+        let angleDeg = 270; // default top
+        if (totalOthers > 1) {
+          angleDeg = startAngle + step * i;
         }
-        seatView.root.style.visibility = 'visible';
-        seatView.name.textContent = info.name;
 
+        // Convert to radians. Adjust for CSS coords where 0 is Right? 
+        // Actually CSS: center is 50%, 50%.
+        // x = 50 + r * cos(a)
+        // y = 50 + r * sin(a)
+
+        const rad = (angleDeg * Math.PI) / 180;
+        // Radius: e.g. 35% of viewport min dimension? or fixed px?
+        // Let's use 38%
+        const radius = 38;
+        const x = 50 + radius * Math.cos(rad);
+        const y = 50 + radius * Math.sin(rad);
+
+        const seat = document.createElement('div');
+        seat.className = 'seat';
+        seat.style.left = x + '%';
+        seat.style.top = y + '%';
+        seat.style.transform = 'translate(-50%, -50%)';
+
+        const info = p;
+        const isActive = state.currentPlayerId === p.id;
         const count = state.handsCount?.[info.id] ?? 0;
-        seatView.meta.textContent = `${count} Kart`;
-        seatView.root.classList.toggle('active', state.currentPlayerId === info.id);
 
-        // Render hand for ME (bottom) separately
-        if (seat === 'bottom') {
-          renderHand(state.you?.hand || [], state);
-        } else {
-          // Render mini cards for others
-          seatView.hand.innerHTML = '';
-          for (let i = 0; i < Math.min(count, 10); i++) {
-            const pip = document.createElement('div');
-            pip.className = 'mini-card';
-            seatView.hand.appendChild(pip);
-          }
-        }
+        let miniCards = '';
+        for (let k = 0; k < Math.min(count, 5); k++) miniCards += '<div class="mini-card"></div>';
+        if (count > 5) miniCards += `<div style="font-size:10px; color:#fff; align-self:center">+${count - 5}</div>`;
+
+        const initial = info.name.charAt(0).toUpperCase();
+
+        seat.innerHTML = `
+          <div class="seat-card ${isActive ? 'active' : ''}" style="border-color:${isActive ? 'var(--yellow)' : 'var(--border)'}">
+            <div class="seat-avatar">${initial}</div>
+            <div class="seat-info">
+              <div class="seat-name">${info.name}</div>
+              <div class="seat-meta">${count} Kart</div>
+            </div>
+          </div>
+          <div class="seat-hand mini-hand">${miniCards}</div>
+        `;
+        seatsContainer.appendChild(seat);
       });
+
+      // Render hand for ME (always bottom)
+      const mySeat = document.querySelector('.seat-bottom');
+      const myInfo = players[0];
+      if (mySeat && myInfo) {
+        const nameEl = mySeat.querySelector('.seat-name');
+        const metaEl = mySeat.querySelector('.seat-meta');
+        const avatarEl = mySeat.querySelector('.seat-avatar');
+
+        if (nameEl) nameEl.textContent = myInfo.name;
+        if (avatarEl) avatarEl.textContent = myInfo.name.charAt(0).toUpperCase();
+        if (metaEl) metaEl.textContent = state.currentPlayerId === myInfo.id ? 'SIRA SENDE!' : 'Bekleniyor...';
+
+        // toggle active class on the card itself
+        const cardEl = mySeat.querySelector('.seat-card');
+        if (cardEl) {
+          if (state.currentPlayerId === myInfo.id) cardEl.classList.add('active');
+          else cardEl.classList.remove('active');
+        }
+
+        renderHand(state.you?.hand || [], state);
+      }
     }
 
     function animateCardFly(sourceImg) {
@@ -797,6 +1021,14 @@
       activeColorEl.style.color = `var(--${s.activeColor})`;
       activeColorEl.style.borderColor = `var(--${s.activeColor})`;
 
+      // Pending Draw Badge
+      if (s.pendingDraw > 0) {
+        drawBadge.style.display = 'flex';
+        drawBadge.textContent = '+' + s.pendingDraw;
+      } else {
+        drawBadge.style.display = 'none';
+      }
+
       directionEl.textContent = s.direction === 1 ? '↻' : '↺';
       currentPlayerEl.textContent = playerNameById(s, s.currentPlayerId);
       pendingEl.textContent = s.pendingDraw || 0;
@@ -809,7 +1041,8 @@
     createBtn.onclick = () => {
       const name = nameInput.value.trim();
       if (!name) return setError('İsim gerekli');
-      socket.emit('join_room', { name });
+      const maxPlayers = parseInt(playerCountEl.value);
+      socket.emit('join_room', { name, maxPlayers });
     };
 
     joinBtn.onclick = () => {

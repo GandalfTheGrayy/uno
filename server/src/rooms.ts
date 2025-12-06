@@ -22,11 +22,12 @@ interface Room {
   botActionTimeout?: ReturnType<typeof setTimeout> | null;
   unoTimers?: Map<string, ReturnType<typeof setTimeout>>;
   unoGraceUntil?: Map<string, number>;
+  maxPlayers: number;
 }
 
 const rooms = new Map<string, Room>();
 
-const MAX_PLAYERS = 4;
+const MAX_PLAYERS = 10;
 const BOT_THINK_DELAY_MS = 1000;
 const BOT_NAMES = ['Bot Ada', 'Bot Berk', 'Bot Cem', 'Bot Deniz'];
 
@@ -47,7 +48,7 @@ function makeBot(room: Room, slot: number): Player {
 }
 
 function findNextBotSlot(room: Room): number {
-  for (let i = 0; i < MAX_PLAYERS; i++) {
+  for (let i = 0; i < room.maxPlayers; i++) {
     const id = botId(room.id, i);
     if (!room.players.some(p => p.id === id)) {
       return i;
@@ -57,7 +58,7 @@ function findNextBotSlot(room: Room): number {
 }
 
 function ensureBotSeats(room: Room) {
-  while (room.players.length < MAX_PLAYERS) {
+  while (room.players.length < room.maxPlayers) {
     const slot = findNextBotSlot(room);
     room.players.push(makeBot(room, slot));
   }
@@ -277,22 +278,24 @@ function handleBotAfterPlay(io: Server, room: Room, playerId: string): boolean {
 
 export function setupRooms(io: Server) {
   io.on('connection', (socket: Socket) => {
-    socket.on('join_room', ({ roomId, name }: { roomId?: string; name: string }) => {
+    socket.on('join_room', ({ roomId, name, maxPlayers }: { roomId?: string; name: string, maxPlayers?: number }) => {
       if (!name) return socket.emit('error', { code: 'name_required' });
       let room: Room | undefined;
       if (roomId) {
         room = rooms.get(roomId);
         if (!room) return socket.emit('error', { code: 'room_not_found' });
       } else {
-        room = { id: crypto.randomBytes(3).toString('hex'), players: [], hostId: socket.id, unoTimers: new Map(), unoGraceUntil: new Map() };
+        const mp = Math.max(2, Math.min(MAX_PLAYERS, maxPlayers || 4));
+        room = { id: crypto.randomBytes(3).toString('hex'), players: [], hostId: socket.id, unoTimers: new Map(), unoGraceUntil: new Map(), maxPlayers: mp };
         rooms.set(room.id, room);
       }
       if (!room.unoTimers) room.unoTimers = new Map();
       if (!room.unoGraceUntil) room.unoGraceUntil = new Map();
       if (room.game) return socket.emit('error', { code: 'game_in_progress' });
       const humanCount = getHumanCount(room);
-      if (humanCount >= MAX_PLAYERS) return socket.emit('error', { code: 'room_full' });
-      if (room.players.length >= MAX_PLAYERS) {
+      // use room.maxPlayers for limits
+      if (humanCount >= room.maxPlayers) return socket.emit('error', { code: 'room_full' });
+      if (room.players.length >= room.maxPlayers) {
         const removed = removeOneBot(room);
         if (!removed) return socket.emit('error', { code: 'room_full' });
       }
@@ -313,7 +316,7 @@ export function setupRooms(io: Server) {
       if (!room) return;
       if (room.hostId !== socket.id) return socket.emit('error', { code: 'not_host' });
       ensureBotSeats(room);
-      if (room.players.length !== MAX_PLAYERS) return socket.emit('error', { code: 'need_4_players' });
+      if (room.players.length !== room.maxPlayers) return socket.emit('error', { code: 'need_more_players' });
 
       const deck = generateDeck();
       const playerIds = room.players.map(p => p.id);
@@ -331,7 +334,7 @@ export function setupRooms(io: Server) {
       if (!room) return;
       if (room.hostId !== socket.id) return socket.emit('error', { code: 'not_host' });
       ensureBotSeats(room);
-      if (room.players.length !== MAX_PLAYERS) return socket.emit('error', { code: 'need_4_players' });
+      if (room.players.length !== room.maxPlayers) return socket.emit('error', { code: 'need_more_players' });
       const deck = generateDeck();
       const playerIds = room.players.map(p => p.id);
       room.game = dealInitial(playerIds, deck);
@@ -401,7 +404,14 @@ export function setupRooms(io: Server) {
       const room = rooms.get(roomId);
       if (!room || !room.game) return;
       const res = callUno(room.game, socket.id);
-      if (!res.ok) return socket.emit('error', { code: res.error });
+      if (!res.ok) {
+        // Invalid UNO call -> Penalty
+        socket.emit('error', { code: 'invalid_uno_call' });
+        drawCards(room.game, socket.id, 1);
+        scheduleTurn(io, room);
+        broadcastState(io, room);
+        return;
+      }
       clearUnoTimer(room, socket.id);
       broadcastState(io, room);
     });
