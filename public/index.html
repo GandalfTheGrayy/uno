@@ -754,12 +754,29 @@
       return '/cards/siyah/boş.png';
     }
 
-    function setError(msg) {
-      errorEl.textContent = msg || '';
+    const errorMessages = {
+      name_required: 'Lütfen isminizi giriniz.',
+      room_not_found: 'Oda bulunamadı.',
+      room_full: 'Oda tamamen dolu.',
+      not_host: 'Sadece oda sahibi oyunu başlatabilir.',
+      need_more_players: 'Oyuna başlamak için daha fazla oyuncu gerekiyor.',
+      not_your_turn: 'Sıra sizde değil.',
+      invalid_uno_call: 'Hatalı UNO çağrısı! (+2 ceza)',
+      must_stack_draw: 'Cezayı yansıtmamak için +2 veya +4 oynamalısın!',
+      card_not_in_hand: 'Bu kart elinizde yok.',
+      color_required: 'Lütfen bir renk seçiniz.',
+      invalid_move: 'Bu hamle geçersiz.',
+      no_such_player: 'Böyle bir oyuncu bulunamadı.',
+      uno_only_at_one_card: 'UNO sadece 1 kart kaldığında denebilir.',
+      game_in_progress: 'Oyun şu an devam ediyor.'
+    };
+
+    function setError(code) {
+      const msg = errorMessages[code] || code || '';
+      errorEl.textContent = msg;
       if (msg) {
         errorEl.classList.add('visible');
-        if (msg === 'invalid_uno_call') {
-          errorEl.textContent = 'Hatalı UNO! (+1 Cezalı)';
+        if (code === 'invalid_uno_call') {
           beep(200, 'sawtooth', 0.5, 0.4);
         } else {
           beep(150, 'square', 0.2, 0.2);

@@ -291,14 +291,72 @@ export function setupRooms(io: Server) {
       }
       if (!room.unoTimers) room.unoTimers = new Map();
       if (!room.unoGraceUntil) room.unoGraceUntil = new Map();
-      if (room.game) return socket.emit('error', { code: 'game_in_progress' });
+
+      // Check if game is in progress
+      if (room.game) {
+        // Try to find a bot to replace
+        const botIndex = room.players.findIndex(p => p.isBot);
+        if (botIndex === -1) {
+          return socket.emit('error', { code: 'room_full' });
+        }
+
+        // Replace the bot
+        const bot = room.players[botIndex];
+        if (!bot) return socket.emit('error', { code: 'room_full' });
+
+        const oldId = bot.id;
+        const newId = socket.id;
+
+        // Update player info
+        room.players[botIndex] = { id: newId, name, isBot: false };
+
+        // Migrate Game State
+        const game = room.game;
+        const pIdx = game.players.indexOf(oldId);
+        if (pIdx !== -1) {
+          game.players[pIdx] = newId;
+        }
+
+        // Migrate Hand
+        if (game.hands[oldId]) {
+          game.hands[newId] = game.hands[oldId];
+          delete game.hands[oldId];
+        }
+
+        // Migrate Timers
+        if (room.unoTimers?.has(oldId)) {
+          const t = room.unoTimers.get(oldId);
+          room.unoTimers.delete(oldId);
+          if (t) room.unoTimers.set(newId, t);
+        }
+        if (room.unoGraceUntil?.has(oldId)) {
+          const g = room.unoGraceUntil.get(oldId);
+          room.unoGraceUntil.delete(oldId);
+          if (g) room.unoGraceUntil.set(newId, g);
+        }
+
+        // Join Socket
+        socket.join(room.id);
+        socket.data.roomId = room.id;
+        socket.data.playerId = newId;
+
+        socket.emit('joined', { roomId: room.id, playerId: newId, hostId: room.hostId, players: room.players });
+        io.to(room.id).emit('players_update', room.players);
+
+        // Broadcast new state so everyone sees the name change and new player enters game view
+        broadcastState(io, room);
+        return;
+      }
+
+      // Normal Join (Lobby)
       const humanCount = getHumanCount(room);
-      // use room.maxPlayers for limits
       if (humanCount >= room.maxPlayers) return socket.emit('error', { code: 'room_full' });
+
       if (room.players.length >= room.maxPlayers) {
         const removed = removeOneBot(room);
         if (!removed) return socket.emit('error', { code: 'room_full' });
       }
+
       const player: Player = { id: socket.id, name, isBot: false };
       room.players.push(player);
       ensureBotSeats(room);
@@ -381,7 +439,10 @@ export function setupRooms(io: Server) {
         const n = game.pendingDraw;
         drawCards(game, socket.id, n);
         game.pendingDraw = 0;
-        // keep currentPlayerIndex unchanged; allow player to play now
+
+        // Fix: Force next turn after penalty
+        game.currentPlayerIndex = nextIndex(game);
+
         // reset UNO timer for this player since hand changed
         clearUnoTimer(room, socket.id);
         scheduleTurn(io, room);
