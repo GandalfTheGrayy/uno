@@ -28,7 +28,7 @@ interface Room {
 const rooms = new Map<string, Room>();
 
 const MAX_PLAYERS = 10;
-const BOT_THINK_DELAY_MS = 1000;
+const BOT_THINK_DELAY_MS = 2500;
 const BOT_NAMES = ['Bot Ada', 'Bot Berk', 'Bot Cem', 'Bot Deniz'];
 
 function botId(roomId: string, slot: number) {
@@ -133,6 +133,10 @@ function scheduleTurn(io: Server, room: Room) {
   room.turnTimer = setTimeout(() => {
     handleTurnTimeout(io, room.id);
   }, TURN_MS);
+  // Her yeni turda UNO deneme listesini sıfırla
+  if (room.game) {
+    room.game.unoAttemptedThisRound = [];
+  }
   maybeTriggerBotTurn(io, room);
 }
 
@@ -489,12 +493,22 @@ export function setupRooms(io: Server) {
       if (!roomId) return;
       const room = rooms.get(roomId);
       if (!room || !room.game) return;
+
+      // Her oyuncu round'da sadece 1 kez UNO'ya basabilir
+      if (room.game.unoAttemptedThisRound.includes(socket.id)) {
+        socket.emit('error', { code: 'uno_already_attempted' });
+        return;
+      }
+
+      // Bu oyuncuyu UNO denenenler listesine ekle
+      room.game.unoAttemptedThisRound.push(socket.id);
+
       const res = callUno(room.game, socket.id);
       if (!res.ok) {
         // Invalid UNO call -> Penalty
         socket.emit('error', { code: 'invalid_uno_call' });
         drawCards(room.game, socket.id, 1);
-        scheduleTurn(io, room);
+        // Süreyi sıfırlama, sadece state güncelle
         broadcastState(io, room);
         return;
       }

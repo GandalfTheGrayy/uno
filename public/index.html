@@ -240,7 +240,8 @@
     .my-hand {
       display: flex;
       justify-content: center;
-      flex-wrap: wrap;
+      flex-wrap: wrap-reverse;
+      align-content: flex-end;
       gap: -10px;
       /* Overlap slightly */
       pointer-events: auto;
@@ -761,7 +762,7 @@
       not_host: 'Sadece oda sahibi oyunu başlatabilir.',
       need_more_players: 'Oyuna başlamak için daha fazla oyuncu gerekiyor.',
       not_your_turn: 'Sıra sizde değil.',
-      invalid_uno_call: 'Hatalı UNO çağrısı! (+2 ceza)',
+      invalid_uno_call: 'Hatalı UNO çağrısı! (+1 ceza)',
       must_stack_draw: 'Cezayı yansıtmamak için +2 veya +4 oynamalısın!',
       card_not_in_hand: 'Bu kart elinizde yok.',
       color_required: 'Lütfen bir renk seçiniz.',
@@ -769,7 +770,8 @@
       no_such_player: 'Böyle bir oyuncu bulunamadı.',
       uno_only_at_one_card: 'UNO sadece 1 kart kaldığında denebilir.',
       game_in_progress: 'Oyun şu an devam ediyor.',
-      already_drew: 'Bu turda zaten kart çektiniz!'
+      already_drew: 'Bu turda zaten kart çektiniz!',
+      uno_already_attempted: 'Bu turda zaten UNO denediniz!'
     };
 
     function setError(code) {

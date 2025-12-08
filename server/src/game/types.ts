@@ -21,6 +21,7 @@ export interface GameState {
   pendingDraw: number; // when > 0, current player must draw this many and lose turn
   unoCalledPlayerIds: string[]; // players who have pressed UNO while at 1 card
   hasDrawnThisTurn: boolean; // prevents multiple draws in the same turn
+  unoAttemptedThisRound: string[]; // players who have attempted UNO this round
 }
 
 export interface ResultOk<T> { ok: true; value: T }
