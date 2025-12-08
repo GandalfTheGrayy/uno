@@ -35,6 +35,7 @@ export function dealInitial(players: string[], drawPile: Card[]): GameState {
     activeColor: first.color!,
     pendingDraw: 0,
     unoCalledPlayerIds: [],
+    hasDrawnThisTurn: false,
   };
 
   // Apply first card action if action card

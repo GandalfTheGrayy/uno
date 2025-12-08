@@ -409,6 +409,10 @@ export function setupRooms(io: Server) {
       if (!room || !room.game) return;
       const res = playCard(room.game, socket.id, cardId, color);
       if (!res.ok) return socket.emit('error', { code: res.error });
+
+      // Reset the draw flag since turn is changing
+      room.game.hasDrawnThisTurn = false;
+
       // Game over check
       const playedHand = room.game.hands[socket.id];
       if (playedHand && playedHand.length === 0) {
@@ -434,22 +438,43 @@ export function setupRooms(io: Server) {
       const game = room.game;
       const currentId = game.players[game.currentPlayerIndex];
       if (currentId !== socket.id) return socket.emit('error', { code: 'not_your_turn' });
+
+      // Prevent drawing multiple times in the same turn
+      if (game.hasDrawnThisTurn) {
+        return socket.emit('error', { code: 'already_drew' });
+      }
+
       if (game.pendingDraw > 0) {
-        // Draw the accumulated penalty but keep the turn (house rule)
+        // Draw the accumulated penalty cards
         const n = game.pendingDraw;
         drawCards(game, socket.id, n);
         game.pendingDraw = 0;
 
-        // Fix: Force next turn after penalty
+        // After drawing penalty, turn passes to next player
         game.currentPlayerIndex = nextIndex(game);
+        game.hasDrawnThisTurn = false; // Reset for next player
 
         // reset UNO timer for this player since hand changed
         clearUnoTimer(room, socket.id);
         scheduleTurn(io, room);
       } else {
-        // Draw one and keep the turn; player may play if possible
+        // Draw one card
         drawCards(game, socket.id, 1);
+        game.hasDrawnThisTurn = true; // Mark that player has drawn
         clearUnoTimer(room, socket.id);
+
+        // Check if player has any playable card after drawing
+        const hand = game.hands[socket.id];
+        const top = game.discardPile[game.discardPile.length - 1];
+        const hasPlayable = top && hand?.some(card => canPlayOnTop(card, top, game.activeColor));
+
+        if (!hasPlayable) {
+          // No playable card, turn passes without penalty
+          game.currentPlayerIndex = nextIndex(game);
+          game.hasDrawnThisTurn = false; // Reset for next player
+        }
+        // If player has playable card, turn stays with them (they can play or pass will happen on timeout)
+
         scheduleTurn(io, room);
       }
       broadcastState(io, room);
